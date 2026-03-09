@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  postgres-order:
+    image: postgres:15-alpine
+    container_name: aurora-postgres-order
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_password
+      POSTGRES_DB: order_db
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+    networks:
+      - aurora-network
+
+  mongo-catalog:
+    image: mongo:6.0
+    container_name: aurora-mongo-catalog
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_catalog_data:/data/db
+    networks:
+      - aurora-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: aurora-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - aurora-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: aurora-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - aurora-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: aurora-elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - aurora-network
+
+networks:
+  aurora-network:
+    driver: bridge
+
+volumes:
+  postgres_order_data:
+  mongo_catalog_data:
+  elasticsearch_data:

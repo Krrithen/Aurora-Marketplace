@@ -1,234 +1,144 @@
 # Aurora Marketplace
 
-A comprehensive marketplace platform built with microservices architecture, featuring Vue.js frontend and Spring Boot backend services.
+A high-performance, event-driven e-commerce platform built with modern microservices architecture. It demonstrates advanced patterns like gRPC, CQRS, Event Sourcing, and Backend-for-Frontend (BFF).
 
 ## Overview
 
-Aurora Marketplace is a project built to demonstrate and understand modern software architecture patterns, particularly microservices, REST APIs, and enterprise search capabilities. This project serves as a learning platform for understanding how different technologies work together in a real-world application.
+Aurora Marketplace is designed to solve real-world engineering challenges such as the N+1 query problem, dual-write data loss, and high-concurrency search. It moves beyond simple CRUD to showcase a production-grade system design.
 
-### Learning Objectives
+### Key Architecture Features
 
-This project was created to explore and understand:
+- **Microservices Architecture**: 4 focused services (Gateway, Order, Catalog, Search).
+- **gRPC Communication**: High-performance, strongly-typed internal communication using Protobuf.
+- **Event-Driven Design**: Asynchronous data synchronization using Apache Kafka (CQRS pattern).
+- **Backend-for-Frontend (BFF)**: The API Gateway acts as a smart orchestration layer, aggregating data for the client.
+- **Polyglot Persistence**: Using the right database for the job:
+    - **PostgreSQL**: Transactional data (Orders).
+    - **MongoDB**: Flexible product catalog (Catalog).
+    - **Elasticsearch**: Full-text search engine (Search).
+    - **Redis**: Caching and rate limiting (Gateway).
 
-- **Microservices Architecture**: How to design, implement, and orchestrate independent services
-- **REST API Development**: Building robust, scalable APIs with Spring Boot
-- **Service Communication**: Inter-service communication patterns using Feign clients
-- **Enterprise Search**: Implementing advanced search capabilities with Apache Solr
-- **API Gateway Pattern**: Centralized routing, load balancing, and service orchestration
-- **Database Integration**: Working with MongoDB for data persistence
-- **Frontend-Backend Integration**: Connecting Vue.js frontend with microservices backend
-
-### Key Features
-
-- **Modern Frontend**: Vue.js 2.7.14 with Vue Router and Vuex
-- **Microservices Backend**: Spring Boot services with independent scaling
-- **Advanced Search**: Apache Solr-powered product search
-- **User Management**: Complete authentication and profile management
-- **Order Processing**: Full order lifecycle management
-- **Shopping Cart**: Persistent cart functionality
-- **Merchant Management**: Multi-merchant support
-- **API Gateway**: Centralized routing and orchestration
-
-## Architecture
-
-The platform follows a microservices architecture pattern with the following components:
+## Architecture Diagram
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   API Gateway   │    │   Search Service │
-│   (Vue.js)      │◄──►│   (Port 8081)   │◄──►│   (Port 8082)   │
-│   (Port 8080)   │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                    ┌─────────────────────────┐
-                    │     Microservices       │
-                    │                         │
-                    │  ┌─────────┐ ┌─────────┐│
-                    │  │  Users  │ │  Cart   ││
-                    │  │ (8084)  │ │ (8087)  ││
-                    │  └─────────┘ └─────────┘│
-                    │                         │
-                    │  ┌─────────┐ ┌─────────┐│
-                    │  │ Orders  │ │Merchants││
-                    │  │ (8083)  │ │ (8086)  ││
-                    │  └─────────┘ └─────────┘│
-                    └─────────────────────────┘
-                                │
-                                ▼
-                    ┌─────────────────────────┐
-                    │      Databases          │
-                    │                         │
-                    │  ┌─────────┐ ┌─────────┐│
-                    │  │MongoDB  │ │  Solr   ││
-                    │  │         │ │         ││
-                    │  └─────────┘ └─────────┘│
-                    └─────────────────────────┘
-```
-
-## Project Structure
-
-```
-Aurora-Marketplace/
-├── frontend/                           # Vue.js Frontend Application
-│   ├── src/
-│   │   ├── components/                 # Reusable Vue components
-│   │   ├── views/                     # Page components
-│   │   │   ├── HomeView.vue           # Homepage
-│   │   │   ├── CartView.vue           # Shopping cart page
-│   │   │   ├── AccountView.vue        # User account page
-│   │   │   ├── MyLogin.vue            # Login page
-│   │   │   └── MyRegister.vue         # Registration page
-│   │   ├── router/                    # Vue Router configuration
-│   │   ├── store/                     # Vuex store modules
-│   │   ├── config/                    # Configuration files
-│   │   │   └── api.js                 # API configuration
-│   │   └── assets/                    # Static assets
-│   ├── package.json                   # Frontend dependencies
-│   ├── vue.config.js                  # Vue CLI configuration
-│   └── public/                        # Public assets
-├── services/                          # Backend Microservices
-│   ├── api-gateway/                   # API Gateway Service (Port 8081)
-│   │   ├── src/main/java/com/example/auroramarketplace/
-│   │   │   ├── controller/            # REST controllers
-│   │   │   ├── services/              # Business logic
-│   │   │   ├── entities/              # Data models
-│   │   │   ├── dto/                   # Data transfer objects
-│   │   │   ├── config/                # Configuration classes
-│   │   │   └── feignclients/          # Service clients
-│   │   ├── src/main/resources/
-│   │   │   └── application.properties # Service configuration
-│   │   └── pom.xml                    # Maven dependencies
-│   ├── search-service/                # Search Service (Port 8082)
-│   │   ├── src/main/java/com/example/Search/
-│   │   │   ├── controller/            # Search endpoints
-│   │   │   ├── config/                # Solr configuration
-│   │   │   └── dto/                   # Search DTOs
-│   │   └── pom.xml
-│   ├── order-service/                 # Order Processing Service (Port 8083)
-│   ├── user-service/                  # User Management Service (Port 8084)
-│   ├── merchant-service/              # Merchant Management Service (Port 8086)
-│   └── cart-service/                  # Shopping Cart Service (Port 8087)
-├── scripts/                           # Build and Deployment Scripts
-│   ├── start-all-services.sh          # Start all services script
-│   └── build-all.sh                   # Build all services script
-└── README.md                          # This file
+┌──────────────┐       HTTP/JSON        ┌───────────────────┐
+│              │ ─────────────────────► │                   │
+│   Client     │                        │    API Gateway    │
+│ (Web/Mobile) │ ◄───────────────────── │      (BFF)        │
+│              │                        │    (Port 8081)    │
+└──────────────┘                        └─────────┬─────────┘
+                                                  │
+                                         gRPC     │
+          ┌───────────────────────────────────────┼──────────────────────────────────────┐
+          │                                       │                                      │
+          ▼                                       ▼                                      ▼
+┌───────────────────┐                   ┌───────────────────┐                  ┌───────────────────┐
+│                   │                   │                   │                  │                   │
+│   Order Service   │                   │  Catalog Service  │                  │   Search Service  │
+│    (Port 9090)    │                   │    (Port 9091)    │                  │    (Port 9093)    │
+│                   │                   │                   │                  │                   │
+└─────────┬─────────┘                   └─────────┬─────────┘                  └─────────┬─────────┘
+          │                                       │                                      │
+          │ JDBC                                  │ Mongo Driver                         │ REST/Native
+          ▼                                       ▼                                      ▼
+    ┌────────────┐                          ┌────────────┐                         ┌─────────────┐
+    │ PostgreSQL │                          │  MongoDB   │                         │Elasticsearch│
+    └────────────┘                          └─────┬──────┘                         └──────▲──────┘
+                                                  │                                       │
+                                                  │         ProductCreatedEvent           │
+                                                  └───────────────────────────────────────┘
+                                                                 (via Kafka)
 ```
 
 ## Service Details
 
-### Frontend Service (Port 8080)
+### 1. API Gateway (Port 8081)
+The entry point for all external traffic.
+*   **Tech**: Spring Cloud Gateway, WebFlux.
+*   **Role**: Routes requests, handles authentication (future), and aggregates data.
+*   **Key Feature**: Translates external REST/JSON requests into internal gRPC calls.
 
-**Technology Stack:**
-- Vue.js 2.7.14
-- Vue Router 3.6.5
-- Vuex 3.6.2
-- Axios 1.6.0
+### 2. Order Service (Port 9090)
+Handles the transactional core of the business.
+*   **Tech**: Spring Boot, Data JPA, PostgreSQL.
+*   **Protocol**: gRPC.
+*   **Role**: Manages order lifecycle and inventory reservation.
 
-**Key Components:**
-- `DemoProducts.vue`: Product listing with search and filtering
-- `Navbar.vue`: Navigation with user authentication
-- `CartView.vue`: Shopping cart interface
-- `AccountView.vue`: User account management
+### 3. Catalog Service (Port 9091)
+Manages product data with a flexible schema.
+*   **Tech**: Spring Boot, Data MongoDB.
+*   **Protocol**: gRPC.
+*   **Role**: Source of truth for product information.
+*   **Key Feature**: Publishes `ProductCreatedEvent` to Kafka whenever a product is added.
 
-### API Gateway Service (Port 8081)
+### 4. Search Service (Port 9093)
+Provides high-speed search capabilities.
+*   **Tech**: Spring Boot, Data Elasticsearch, Kafka Consumer.
+*   **Protocol**: gRPC.
+*   **Role**: Consumes events from Kafka to build a read-optimized search index.
 
-**Technology Stack:**
-- Spring Boot 2.7.18
-- Spring Cloud Gateway
-- Spring Security
-- MongoDB
+### 5. Discovery Server (Port 8761)
+Service registry for dynamic service discovery.
+*   **Tech**: Netflix Eureka.
 
-**Key Endpoints:**
-- `/products/*`: Product management
-- `/users/*`: User operations
-- `/cart/*`: Cart operations
-- `/orders/*`: Order processing
-- `/merchants/*`: Merchant management
+## Getting Started
 
-### Search Service (Port 8082)
+### Prerequisites
+*   **Java 21**
+*   **Maven**
+*   **Docker & Docker Compose**
+*   **Python 3** (for hydration script)
 
-**Technology Stack:**
-- Spring Boot 2.7.18
-- Apache Solr 8.11.2
-- Spring Data Solr
+### Installation & Run
 
-**Key Endpoints:**
-- `GET /search/{query}`: Search products
-- `POST /search/add`: Add product to search index
-- `GET /search/suggestions`: Get search suggestions
+1.  **Start Infrastructure**
+    Spin up the databases and message brokers:
+    ```bash
+    docker-compose up -d
+    ```
 
-### Order Service (Port 8083)
+2.  **Start Discovery Server**
+    ```bash
+    cd services/discovery-server
+    mvn clean package -DskipTests
+    java -jar target/discovery-server-0.0.1-SNAPSHOT.jar
+    ```
 
-**Technology Stack:**
-- Spring Boot 2.7.18
-- MongoDB
-- Spring Mail
+3.  **Start Backend Services**
+    Open separate terminals for each:
+    ```bash
+    # Catalog Service
+    cd services/catalog-service
+    mvn clean package -DskipTests
+    java -jar target/Catalog-0.0.1-SNAPSHOT.jar
 
-**Key Endpoints:**
-- `POST /orders`: Create new order
-- `GET /orders/{id}`: Get order details
-- `PUT /orders/{id}/status`: Update order status
-- `GET /orders/user/{userId}`: Get user orders
+    # Search Service
+    cd services/search-service
+    mvn clean package -DskipTests
+    java -jar target/Search-0.0.1-SNAPSHOT.jar
 
-### User Service (Port 8084)
+    # Order Service
+    cd services/order-service
+    mvn clean package -DskipTests
+    java -jar target/Orders-0.0.1-SNAPSHOT.jar
+    ```
 
-**Technology Stack:**
-- Spring Boot 2.7.18
-- MongoDB
-- Spring Security
+4.  **Start API Gateway**
+    ```bash
+    cd services/api-gateway
+    mvn clean package -DskipTests
+    java -jar target/ecomProject-0.0.1-SNAPSHOT.jar
+    ```
 
-**Key Endpoints:**
-- `POST /users/register`: User registration
-- `POST /users/login`: User authentication
-- `GET /users/{id}`: Get user profile
-- `PUT /users/{id}`: Update user profile
+5.  **Hydrate Data**
+    Populate the system with sample data from the `dataset/` folder:
+    ```bash
+    python3 hydrate.py
+    ```
 
-### Merchant Service (Port 8086)
+## API Endpoints (Gateway)
 
-**Technology Stack:**
-- Spring Boot 2.7.18
-- MongoDB
-- Spring Data MongoDB
-
-**Key Endpoints:**
-- `POST /merchants`: Register merchant
-- `GET /merchants/{id}`: Get merchant details
-- `POST /merchants/{id}/products`: Add products
-- `GET /merchants/{id}/products`: Get merchant products
-
-### Cart Service (Port 8087)
-
-**Technology Stack:**
-- Spring Boot 2.7.18
-- MongoDB
-- Spring Data MongoDB
-
-**Key Endpoints:**
-- `POST /cart/add`: Add item to cart
-- `GET /cart/{userId}`: Get user cart
-- `PUT /cart/{userId}/item/{productId}`: Update cart item
-- `DELETE /cart/{userId}/item/{productId}`: Remove cart item
-
-## Search Features
-
-1. **Full-Text Search**
-   - Product name, description, and category search
-   - Fuzzy matching for typos
-   - Synonym support
-
-2. **Faceted Search**
-   - Filter by category
-   - Price range filtering
-   - Brand filtering
-   - Availability filtering
-
-3. **Auto-Complete**
-   - Real-time search suggestions
-   - Popular search terms
-   - Typo correction
-
-4. **Search Analytics**
-   - Search query tracking
-   - Popular products
-   - Search performance metrics
+*   `POST /api/products` - Create a product (Hydration)
+*   `GET /api/products/{id}` - Get product details
+*   `POST /api/orders` - Create an order
+*   `GET /api/orders/{id}` - Get order details

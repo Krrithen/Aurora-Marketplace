@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+option java_package = "com.example.catalog.grpc";
+option java_multiple_files = true;
+
+package catalog;
+
+service CatalogService {
+  rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+  rpc GetProduct (GetProductRequest) returns (ProductResponse);
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+  rpc BatchGetProducts (BatchGetProductsRequest) returns (BatchGetProductsResponse);
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+  int32 quantity = 4;
+  string category_id = 5;
+  map<string, string> attributes = 6;
+}
+
+message GetProductRequest {
+  string product_id = 1;
+}
+
+message ListProductsRequest {
+  string category_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message BatchGetProductsRequest {
+  repeated string product_ids = 1;
+}
+
+message ProductResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 quantity = 5;
+  string category_id = 6;
+  map<string, string> attributes = 7; // Polymorphic attributes (e.g., "size": "M", "color": "Red")
+}
+
+message ListProductsResponse {
+  repeated ProductResponse products = 1;
+  int64 total_count = 2;
+}
+
+message BatchGetProductsResponse {
+  repeated ProductResponse products = 1;
+}

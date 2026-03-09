@@ -29,10 +29,7 @@ build_service() {
 }
 
 # Build services
-build_service "Cart Service" "services/cart-service"
-build_service "User Service" "services/user-service"
 build_service "Order Service" "services/order-service"
-build_service "Merchant Service" "services/merchant-service"
 build_service "Search Service" "services/search-service"
 build_service "API Gateway" "services/api-gateway"
 

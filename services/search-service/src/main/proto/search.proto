@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_package = "com.example.search.grpc";
+option java_multiple_files = true;
+
+package search;
+
+service SearchService {
+  rpc SearchProducts (SearchRequest) returns (SearchResponse);
+}
+
+message SearchRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message SearchResponse {
+  repeated ProductResult products = 1;
+  int64 total_hits = 2;
+}
+
+message ProductResult {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  double score = 5;
+}
